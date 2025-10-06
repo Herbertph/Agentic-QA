@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from . import models, schemas, crud, database
 from dotenv import load_dotenv
 from . import utils
+from fastapi.middleware.cors import CORSMiddleware
+import json
 import os
 
 # 🔹 Carregar variáveis do .env
@@ -12,6 +14,15 @@ load_dotenv()
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
+
+# 🔹 Permitir acesso do frontend local
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # você pode restringir depois, ex: ["http://127.0.0.1:5500"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 🔹 Dependência para abrir/fechar sessão
 def get_db():
@@ -35,45 +46,67 @@ def read_root():
 
 @app.post("/ask")
 def ask_question(user_question: str, db: Session = Depends(get_db)):
-    # 1️⃣ Gerar embedding da pergunta do usuário
-    user_embedding = utils.get_embedding(user_question)
+    try:
+        # 1️⃣ Gera embedding da pergunta do usuário
+        user_embedding = utils.get_embedding(user_question)
+        if not user_embedding:
+            raise Exception("Falha ao gerar embedding")
 
-    # 2️⃣ Buscar todas embeddings salvas
-    db_embeddings = db.query(models.QuestionEmbedding).all()
-    if not db_embeddings:
-        crud.create_unanswered(db, user_question)
-        return {"answer": "Ainda não tenho uma resposta para isso. Procure um lead."}
+        # 2️⃣ Busca as perguntas mais parecidas no banco
+        all_embeddings = db.query(models.QuestionEmbedding).all()
+        if not all_embeddings:
+            return {
+                "context_match_score": 0,
+                "context_used": None,
+                "ai_answer": "I don’t have this answer now. Please check with one of the leads.",
+            }
 
-    # 3️⃣ Calcular similaridade e encontrar a mais próxima
-    similarities = []
-    for e in db_embeddings:
-        stored_vec = utils.deserialize_embedding(e.embedding)
-        sim = utils.cosine_similarity(user_embedding, stored_vec)
-        similarities.append((e.question_id, sim))
+        # 3️⃣ Calcula similaridades
+        similarities = []
+        for emb in all_embeddings:
+            score = utils.cosine_similarity(user_embedding, json.loads(emb.embedding))
+            similarities.append((emb, score))
 
-    # 4️⃣ Ordenar por similaridade
-    similarities.sort(key=lambda x: x[1], reverse=True)
-    best_match_id, best_score = similarities[0]
+        # 4️⃣ Encontra a mais próxima
+        best_match, best_score = max(similarities, key=lambda x: x[1])
 
-    # 5️⃣ Se a similaridade for baixa, salvar como pendente
-    if best_score < 0.75:
-        crud.create_unanswered(db, user_question)
-        return {"answer": "Ainda não tenho uma resposta para isso. Procure um lead."}
+        # 5️⃣ Se a similaridade for alta, usa o contexto do banco
+        if best_score > 0.75:
+            question = db.query(models.Question).filter(models.Question.id == best_match.question_id).first()
+            return {
+                "context_match_score": round(best_score, 3),
+                "context_used": question.text,
+                "ai_answer": question.answer,
+            }
 
-    # 6️⃣ Buscar a pergunta/resposta correspondente
-    best_question = crud.get_question(db, best_match_id)
+        # 6️⃣ Caso contrário → IA tenta responder
+        ai_answer = utils.query_local_ai(user_question, [])
+        if ai_answer and "Erro interno" not in ai_answer:
+            return {
+                "context_match_score": round(best_score, 3),
+                "context_used": None,
+                "ai_answer": ai_answer,
+            }
 
-    # 7️⃣ Criar o prompt com contexto e perguntar à IA local
-    context = f"Base de conhecimento:\nPergunta: {best_question.text}\nResposta: {best_question.answer}"
-    prompt = f"{context}\n\nPergunta do usuário: {user_question}\n\nBaseando-se APENAS no contexto acima, responda de forma clara e objetiva."
+        # 7️⃣ Se IA também não souber → salva como não respondida
+        unanswered = models.UnansweredQuestion(text=user_question)
+        db.add(unanswered)
+        db.commit()
 
-    ai_answer = utils.query_ollama(prompt)
+        return {
+            "context_match_score": 0,
+            "context_used": None,
+            "ai_answer": "❓ Ainda não tenho uma resposta para isso. Consulte um lead.",
+        }
 
-    return {
-        "context_match_score": round(float(best_score), 3),
-        "context_used": best_question.text,
-        "ai_answer": ai_answer
-    }
+    except Exception as e:
+        print("Erro interno:", e)
+        return {
+            "context_match_score": 0,
+            "context_used": None,
+            "ai_answer": f"⚠️ Erro interno: {str(e)}",
+        }
+
 
 
 @app.get("/questions/", response_model=list[schemas.Question])
