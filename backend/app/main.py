@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from . import models, schemas, crud, database
 from dotenv import load_dotenv
+from . import utils
 import os
 
 # 🔹 Carregar variáveis do .env
@@ -30,17 +31,50 @@ def verify_admin(admin_key: str = Header(...)):
 # -------------------------
 @app.get("/")
 def read_root():
-    return {"message": "Agent API is running!"}
+    return {"message": "Agent API is running with embeddings ready!"}
 
 @app.post("/ask")
 def ask_question(user_question: str, db: Session = Depends(get_db)):
-    db_question = crud.get_question_by_text(db, user_question)
-    if db_question:
-        return {"answer": db_question.answer}
+    # 1️⃣ Gerar embedding da pergunta do usuário
+    user_embedding = utils.get_embedding(user_question)
 
-    # 🔹 Se não existe, salvar como pendente
-    crud.create_unanswered(db, user_question)
-    return {"answer": "Ainda não tenho uma resposta para isso. O admin será notificado."}
+    # 2️⃣ Buscar todas embeddings salvas
+    db_embeddings = db.query(models.QuestionEmbedding).all()
+    if not db_embeddings:
+        crud.create_unanswered(db, user_question)
+        return {"answer": "Ainda não tenho uma resposta para isso. Procure um lead."}
+
+    # 3️⃣ Calcular similaridade e encontrar a mais próxima
+    similarities = []
+    for e in db_embeddings:
+        stored_vec = utils.deserialize_embedding(e.embedding)
+        sim = utils.cosine_similarity(user_embedding, stored_vec)
+        similarities.append((e.question_id, sim))
+
+    # 4️⃣ Ordenar por similaridade
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    best_match_id, best_score = similarities[0]
+
+    # 5️⃣ Se a similaridade for baixa, salvar como pendente
+    if best_score < 0.75:
+        crud.create_unanswered(db, user_question)
+        return {"answer": "Ainda não tenho uma resposta para isso. Procure um lead."}
+
+    # 6️⃣ Buscar a pergunta/resposta correspondente
+    best_question = crud.get_question(db, best_match_id)
+
+    # 7️⃣ Criar o prompt com contexto e perguntar à IA local
+    context = f"Base de conhecimento:\nPergunta: {best_question.text}\nResposta: {best_question.answer}"
+    prompt = f"{context}\n\nPergunta do usuário: {user_question}\n\nBaseando-se APENAS no contexto acima, responda de forma clara e objetiva."
+
+    ai_answer = utils.query_ollama(prompt)
+
+    return {
+        "context_match_score": round(float(best_score), 3),
+        "context_used": best_question.text,
+        "ai_answer": ai_answer
+    }
+
 
 @app.get("/questions/", response_model=list[schemas.Question])
 def read_questions(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
