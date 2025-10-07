@@ -57,61 +57,80 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
         if not user_embedding:
             raise Exception("Falha ao gerar embedding")
 
-        # 2️⃣ Busca todos os embeddings do banco
+        # --------------------------
+        # 2️⃣ Busca nas perguntas do banco
+        # --------------------------
         all_embeddings = db.query(models.QuestionEmbedding).all()
-        if not all_embeddings:
-            unanswered = models.UnansweredQuestion(text=user_question)
-            db.add(unanswered)
-            db.commit()
+        question_match = None
+        question_score = -1.0
+
+        if all_embeddings:
+            similarities = []
+            for emb in all_embeddings:
+                score = utils.cosine_similarity(user_embedding, json.loads(emb.embedding))
+                similarities.append((emb, score))
+
+            best_match, best_score = max(similarities, key=lambda x: x[1])
+            if best_score >= 0.85:  # limiar de confiança
+                question_match = db.query(models.Question).filter(models.Question.id == best_match.question_id).first()
+                question_score = best_score
+
+        # --------------------------
+        # 3️⃣ Busca nos documentos (PDFs)
+        # --------------------------
+        pdf_match = None
+        pdf_score = -1.0
+
+        all_chunks = db.query(models.DocumentChunk).all()
+        if all_chunks:
+            similarities = []
+            for chunk in all_chunks:
+                score = utils.cosine_similarity(user_embedding, json.loads(chunk.embedding))
+                similarities.append((chunk, score))
+
+            best_chunk, best_chunk_score = max(similarities, key=lambda x: x[1])
+            if best_chunk_score >= 0.83:
+                pdf_match = best_chunk
+                pdf_score = best_chunk_score
+
+        # --------------------------
+        # 4️⃣ Define qual resposta usar
+        # --------------------------
+        # Caso 1: encontrou pergunta no banco
+        if question_match and question_score >= 0.85:
             return {
-                "context_match_score": 0,
-                "context_used": None,
-                "ai_answer": "❓ I don’t have this answer now. Please check with one of the leads.",
+                "context_match_score": round(question_score, 3),
+                "context_used": question_match.text,
+                "ai_answer": question_match.answer,
             }
 
-        # 3️⃣ Calcula similaridades
-        similarities = []
-        for emb in all_embeddings:
-            score = utils.cosine_similarity(user_embedding, json.loads(emb.embedding))
-            similarities.append((emb, score))
-
-        # 4️⃣ Encontra o melhor match
-        best_match, best_score = max(similarities, key=lambda x: x[1])
-
-        # 5️⃣ Define limiar dinâmico
-        limiar = 0.9
-        if len(user_question.split()) <= 10:
-            limiar = 0.85
-
-        # 6️⃣ Se houver correspondência suficiente → usa resposta do banco
-        if best_score >= limiar:
-            question = db.query(models.Question).filter(models.Question.id == best_match.question_id).first()
+        # Caso 2: encontrou resposta em PDF
+        elif pdf_match and pdf_score >= 0.83:
             return {
-                "context_match_score": round(best_score, 3),
-                "context_used": question.text,
-                "ai_answer": question.answer,
+                "context_match_score": round(pdf_score, 3),
+                "context_used": f"Trecho do documento: {pdf_match.source_name}",
+                "ai_answer": pdf_match.content[:600] + "..."  # limita o tamanho da resposta
             }
 
-        # 7️⃣ Caso contrário → salva no banco como sem resposta
+        # Caso 3: nada encontrado
         unanswered = models.UnansweredQuestion(text=user_question)
         db.add(unanswered)
         db.commit()
 
-        # 🔒 Retorna resposta padrão — sem IA, sem sumiço
         return {
-            "context_match_score": round(best_score, 3),
+            "context_match_score": 0,
             "context_used": None,
             "ai_answer": "❓ I don’t have this answer now. Please check with one of the leads.",
         }
 
     except Exception as e:
         print("Erro interno:", e)
-        # 🔒 Garante que o frontend sempre receba algo
         return {
             "context_match_score": 0,
             "context_used": None,
-            "ai_answer": f"⚠️ Internal error: {str(e)}" if str(e) else "⚠️ Unknown internal error.",
+            "ai_answer": f"⚠️ Erro interno: {str(e)}",
         }
+
 
 
 @app.get("/questions/", response_model=list[schemas.Question])
