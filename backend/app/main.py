@@ -1,8 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
-from . import models, schemas, crud, database
+from . import models, schemas, crud, database, utils
 from dotenv import load_dotenv
-from . import utils
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
@@ -33,8 +32,14 @@ def get_db():
         db.close()
 
 # 🔹 Verificação do ADMIN_KEY
-def verify_admin(admin_key: str = Header(...)):
-    if admin_key != os.getenv("ADMIN_KEY"):
+async def verify_admin(request: Request, admin_key: str = Header(None)):
+    # aceita Admin-Key, admin_key, ou adminkey
+    key = (
+        request.headers.get("Admin-Key")
+        or request.headers.get("admin_key")
+        or request.headers.get("adminkey")
+    )
+    if key != os.getenv("ADMIN_KEY"):
         raise HTTPException(status_code=403, detail="Invalid ADMIN_KEY")
 
 # -------------------------

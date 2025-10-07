@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic QA - Painel Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+  <div class="container">
+    <h1>🧠 Painel do Lead</h1>
+
+    <div class="admin-section">
+      <input
+        type="password"
+        id="adminKey"
+        placeholder="Digite sua ADMIN_KEY"
+        style="flex:1; padding:8px; border-radius:5px; border:none; background:#111; color:#fff;"
+      >
+      <button id="loadBtn">🔄 Carregar perguntas</button>
+    </div>
+
+    <div id="unansweredList" class="list"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    const loadBtn = document.getElementById("loadBtn");
+    const adminKeyInput = document.getElementById("adminKey");
+    const unansweredList = document.getElementById("unansweredList");
+
+    loadBtn.addEventListener("click", async () => {
+      const adminKey = adminKeyInput.value.trim();
+      if (!adminKey) return alert("Digite a ADMIN_KEY primeiro!");
+
+      unansweredList.innerHTML = "<em>Carregando perguntas pendentes...</em>";
+
+      try {
+        const res = await fetch(`${API_URL}/admin/unanswered/`, {
+          method: "GET",
+          headers: { "Admin-Key": adminKey },
+        });
+
+        if (!res.ok) throw new Error("Erro ao carregar perguntas.");
+
+        const data = await res.json();
+        if (data.length === 0) {
+          unansweredList.innerHTML = "<p>Nenhuma pergunta pendente! 🎉</p>";
+          return;
+        }
+
+        unansweredList.innerHTML = data
+          .map(
+            (q) => `
+              <div class="question-item" id="question-${q.id}">
+                <p><strong>❓ ${q.text}</strong></p>
+                <textarea id="answer-${q.id}" placeholder="Digite a resposta aqui..."></textarea>
+                <div class="btn-row">
+                  <button onclick="sendAnswer(${q.id})" class="save-btn">💾 Salvar</button>
+                  <button onclick="deleteQuestion(${q.id})" class="delete-btn">🗑️ Apagar</button>
+                </div>
+              </div>
+            `
+          )
+          .join("");
+      } catch (err) {
+        unansweredList.innerHTML = `<span style="color:red;">Erro: ${err.message}</span>`;
+      }
+    });
+
+    async function sendAnswer(id) {
+      const adminKey = adminKeyInput.value.trim();
+      const textArea = document.getElementById(`answer-${id}`);
+      const answer = textArea.value.trim();
+      if (!answer) return alert("Digite uma resposta antes de salvar.");
+
+      try {
+        const res = await fetch(`${API_URL}/admin/questions/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Admin-Key": adminKey,
+          },
+          body: JSON.stringify({ text: document.getElementById(`question-${id}`).querySelector("p").innerText.replace("❓ ", ""), answer }),
+        });
+
+        if (!res.ok) throw new Error("Erro ao salvar resposta.");
+
+        // após salvar, remove da lista de pendentes
+        await fetch(`${API_URL}/admin/unanswered/${id}`, {
+          method: "DELETE",
+          headers: { "Admin-Key": adminKey },
+        });
+
+        document.getElementById(`question-${id}`).remove();
+        alert("✅ Resposta salva com sucesso!");
+      } catch (err) {
+        alert("❌ Erro: " + err.message);
+      }
+    }
+
+    async function deleteQuestion(id) {
+      const adminKey = adminKeyInput.value.trim();
+      if (!confirm("Tem certeza que deseja excluir esta pergunta?")) return;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/unanswered/${id}`, {
+          method: "DELETE",
+          headers: { "Admin-Key": adminKey },
+        });
+
+        if (!res.ok) throw new Error("Falha ao apagar pergunta.");
+        document.getElementById(`question-${id}`).remove();
+        alert("🗑️ Pergunta removida com sucesso!");
+      } catch (err) {
+        alert("❌ Erro ao apagar: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -97,3 +97,15 @@ def query_local_ai(prompt: str, context: list[str] = []):
     except Exception as e:
         print("⚠️ Erro ao consultar modelo local:", e)
         return "⚠️ Erro interno ao consultar o modelo local."
+
+# 🆕 ✅ Serializa embedding para armazenar no banco (necessário para o painel Admin)
+def serialize_embedding(embedding):
+    """
+    Converte o embedding (lista de floats) em string JSON
+    para armazenamento seguro no banco de dados.
+    """
+    try:
+        return json.dumps(embedding)
+    except Exception as e:
+        print(f"⚠️ Erro ao serializar embedding: {e}")
+        return "[]"

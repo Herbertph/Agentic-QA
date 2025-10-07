@@ -7,15 +7,20 @@ body {
   align-items: center;
   height: 100vh;
   margin: 0;
+  overflow: auto;
 }
 
 .container {
+  position: relative;
+  top: 0;
+  transform: none;
   width: 600px;
   background: #1a1a1a;
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
   text-align: center;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -64,4 +69,76 @@ button:hover {
   padding: 10px;
   text-align: left;
   overflow-y: auto;
+}
+
+.admin-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.question-item {
+  background-color: #1a1a1a;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.question-item textarea {
+  width: 100%;
+  height: 80px;
+  margin-top: 5px;
+}
+
+.btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.save-btn {
+  background-color: #00ff99;
+  color: black;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #ff1a1a;
+}
+
+/* 🔹 Ajustes exclusivos para o painel admin */
+.admin-page {
+  background-color: #000;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.admin-page .container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 40px auto !important;
+  max-width: 900px;
+  padding: 30px;
+  overflow: visible;
+  box-sizing: border-box;
 }
