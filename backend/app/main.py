@@ -55,7 +55,7 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
         # 1️⃣ Gera embedding da pergunta do usuário
         user_embedding = utils.get_embedding(user_question)
         if not user_embedding:
-            raise Exception("Falha ao gerar embedding")
+            raise Exception("Fail to generate embedding for the question.")
 
         # --------------------------
         # 2️⃣ Busca nas perguntas do banco
@@ -87,9 +87,9 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
             for chunk in all_chunks:
                 score = utils.cosine_similarity(user_embedding, json.loads(chunk.embedding))
                 similarities.append((chunk, score))
-
+            #--score, chunk in similarities:
             best_chunk, best_chunk_score = max(similarities, key=lambda x: x[1])
-            if best_chunk_score >= 0.83:
+            if best_chunk_score >= 0.85:
                 pdf_match = best_chunk
                 pdf_score = best_chunk_score
 
@@ -105,11 +105,11 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
             }
 
         # Caso 2: encontrou resposta em PDF
-        elif pdf_match and pdf_score >= 0.83:
+        elif pdf_match and pdf_score >= 0.45:
             return {
                 "context_match_score": round(pdf_score, 3),
-                "context_used": f"Trecho do documento: {pdf_match.source_name}",
-                "ai_answer": pdf_match.content[:600] + "..."  # limita o tamanho da resposta
+                "context_used": f"Excerpt of the PDF: {pdf_match.source_name}",
+                "ai_answer": pdf_match.content[:1000] + "..."  # limita o tamanho da resposta
             }
 
         # Caso 3: nada encontrado
@@ -128,7 +128,7 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
         return {
             "context_match_score": 0,
             "context_used": None,
-            "ai_answer": f"⚠️ Erro interno: {str(e)}",
+            "ai_answer": f"⚠️ Internal Error: {str(e)}",
         }
 
 

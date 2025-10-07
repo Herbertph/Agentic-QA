@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agentic QA - Painel Admin</title>
+  <title>VGT - QA -> Admin Panel</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="admin-page">
   <div class="container">
-    <h1>🧠 Painel do Lead</h1>
+    <h1>🧠 Lead Panel</h1>
 
     <div class="admin-section">
       <input
         type="password"
         id="adminKey"
-        placeholder="Digite sua ADMIN_KEY"
+        placeholder="Type your ADMIN_KEY"
         style="flex:1; padding:8px; border-radius:5px; border:none; background:#111; color:#fff;"
       >
-      <button id="loadBtn">🔄 Carregar perguntas</button>
+      <button id="loadBtn">🔄 Load questions</button>
     </div>
 
     <div id="unansweredList" class="list"></div>
@@ -45,7 +45,7 @@
 
         const data = await res.json();
         if (data.length === 0) {
-          unansweredList.innerHTML = "<p>Nenhuma pergunta pendente! 🎉</p>";
+          unansweredList.innerHTML = "<p>No question pending! 🎉</p>";
           return;
         }
 
@@ -54,10 +54,10 @@
             (q) => `
               <div class="question-item" id="question-${q.id}">
                 <p><strong>❓ ${q.text}</strong></p>
-                <textarea id="answer-${q.id}" placeholder="Digite a resposta aqui..."></textarea>
+                <textarea id="answer-${q.id}" placeholder="Typer your answer here..."></textarea>
                 <div class="btn-row">
-                  <button onclick="sendAnswer(${q.id})" class="save-btn">💾 Salvar</button>
-                  <button onclick="deleteQuestion(${q.id})" class="delete-btn">🗑️ Apagar</button>
+                  <button onclick="sendAnswer(${q.id})" class="save-btn">💾 Save</button>
+                  <button onclick="deleteQuestion(${q.id})" class="delete-btn">🗑️ Delete</button>
                 </div>
               </div>
             `
@@ -72,7 +72,7 @@
       const adminKey = adminKeyInput.value.trim();
       const textArea = document.getElementById(`answer-${id}`);
       const answer = textArea.value.trim();
-      if (!answer) return alert("Digite uma resposta antes de salvar.");
+      if (!answer) return alert("Type your answer before saving.");
 
       try {
         const res = await fetch(`${API_URL}/admin/questions/`, {
@@ -84,7 +84,7 @@
           body: JSON.stringify({ text: document.getElementById(`question-${id}`).querySelector("p").innerText.replace("❓ ", ""), answer }),
         });
 
-        if (!res.ok) throw new Error("Erro ao salvar resposta.");
+        if (!res.ok) throw new Error("Error saving answer.");
 
         // após salvar, remove da lista de pendentes
         await fetch(`${API_URL}/admin/unanswered/${id}`, {
@@ -93,7 +93,7 @@
         });
 
         document.getElementById(`question-${id}`).remove();
-        alert("✅ Resposta salva com sucesso!");
+        alert("✅ Answer saved!");
       } catch (err) {
         alert("❌ Erro: " + err.message);
       }
@@ -101,7 +101,7 @@
 
     async function deleteQuestion(id) {
       const adminKey = adminKeyInput.value.trim();
-      if (!confirm("Tem certeza que deseja excluir esta pergunta?")) return;
+      if (!confirm("Are you sure?")) return;
 
       try {
         const res = await fetch(`${API_URL}/admin/unanswered/${id}`, {
@@ -109,11 +109,11 @@
           headers: { "Admin-Key": adminKey },
         });
 
-        if (!res.ok) throw new Error("Falha ao apagar pergunta.");
+        if (!res.ok) throw new Error("Fail to remove the question.");
         document.getElementById(`question-${id}`).remove();
-        alert("🗑️ Pergunta removida com sucesso!");
+        alert("🗑️ Question removed successfully!");
       } catch (err) {
-        alert("❌ Erro ao apagar: " + err.message);
+        alert("❌ Error removing: " + err.message);
       }
     }
   </script>
