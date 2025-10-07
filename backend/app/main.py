@@ -52,13 +52,16 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
         if not user_embedding:
             raise Exception("Falha ao gerar embedding")
 
-        # 2️⃣ Busca as perguntas mais parecidas no banco
+        # 2️⃣ Busca todos os embeddings do banco
         all_embeddings = db.query(models.QuestionEmbedding).all()
         if not all_embeddings:
+            unanswered = models.UnansweredQuestion(text=user_question)
+            db.add(unanswered)
+            db.commit()
             return {
                 "context_match_score": 0,
                 "context_used": None,
-                "ai_answer": "I don’t have this answer now. Please check with one of the leads.",
+                "ai_answer": "❓ I don’t have this answer now. Please check with one of the leads.",
             }
 
         # 3️⃣ Calcula similaridades
@@ -67,11 +70,16 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
             score = utils.cosine_similarity(user_embedding, json.loads(emb.embedding))
             similarities.append((emb, score))
 
-        # 4️⃣ Encontra a mais próxima
+        # 4️⃣ Encontra o melhor match
         best_match, best_score = max(similarities, key=lambda x: x[1])
 
-        # 5️⃣ Se a similaridade for alta, usa o contexto do banco
-        if best_score > 0.75:
+        # 5️⃣ Define limiar dinâmico
+        limiar = 0.9
+        if len(user_question.split()) <= 10:
+            limiar = 0.85
+
+        # 6️⃣ Se houver correspondência suficiente → usa resposta do banco
+        if best_score >= limiar:
             question = db.query(models.Question).filter(models.Question.id == best_match.question_id).first()
             return {
                 "context_match_score": round(best_score, 3),
@@ -79,34 +87,26 @@ def ask_question(user_question: str, db: Session = Depends(get_db)):
                 "ai_answer": question.answer,
             }
 
-        # 6️⃣ Caso contrário → IA tenta responder
-        ai_answer = utils.query_local_ai(user_question, [])
-        if ai_answer and "Erro interno" not in ai_answer:
-            return {
-                "context_match_score": round(best_score, 3),
-                "context_used": None,
-                "ai_answer": ai_answer,
-            }
-
-        # 7️⃣ Se IA também não souber → salva como não respondida
+        # 7️⃣ Caso contrário → salva no banco como sem resposta
         unanswered = models.UnansweredQuestion(text=user_question)
         db.add(unanswered)
         db.commit()
 
+        # 🔒 Retorna resposta padrão — sem IA, sem sumiço
         return {
-            "context_match_score": 0,
+            "context_match_score": round(best_score, 3),
             "context_used": None,
-            "ai_answer": "❓ Ainda não tenho uma resposta para isso. Consulte um lead.",
+            "ai_answer": "❓ I don’t have this answer now. Please check with one of the leads.",
         }
 
     except Exception as e:
         print("Erro interno:", e)
+        # 🔒 Garante que o frontend sempre receba algo
         return {
             "context_match_score": 0,
             "context_used": None,
-            "ai_answer": f"⚠️ Erro interno: {str(e)}",
+            "ai_answer": f"⚠️ Internal error: {str(e)}" if str(e) else "⚠️ Unknown internal error.",
         }
-
 
 
 @app.get("/questions/", response_model=list[schemas.Question])

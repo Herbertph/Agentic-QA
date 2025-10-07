@@ -1,23 +1,63 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agentic QA</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="container">
     <h1>Agentic QA</h1>
     <div class="terminal">
-      <textarea id="question" placeholder="Digite sua pergunta aqui..."></textarea>
-     <button id="sendBtn" type="button">Perguntar</button>
-<button id="resetBtn" type="button">Resetar</button>
-      <hr>
+      <!-- form apenas para manter estrutura sem submissão real -->
+      <form id="qaForm" onsubmit="return false;">
+        <textarea id="question" placeholder="Digite sua pergunta aqui..." autocomplete="off"></textarea>
+        <button id="sendBtn" type="button">Perguntar</button>
+        <button id="resetBtn" type="button">Resetar</button>
+      </form>
+      <hr />
       <div id="response" class="response"></div>
     </div>
   </div>
 
   <script src="script.js"></script>
+
+  <script>
+    // 🚫 Evita qualquer reload automático ou comportamento de form
+    const qaForm = document.getElementById("qaForm");
+    const sendBtn = document.getElementById("sendBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const questionInput = document.getElementById("question");
+
+    // Impede o envio implícito do formulário
+    qaForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    });
+
+    // Bloqueia Enter sozinho dentro do textarea
+    questionInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.ctrlKey) {
+        e.preventDefault();
+      } else if (e.key === "Enter" && e.ctrlKey) {
+        sendBtn.click(); // Ctrl+Enter envia
+      }
+    });
+
+    // Garante que botões não causem refresh
+    [sendBtn, resetBtn].forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    // Remove qualquer listener antigo de beforeunload
+    window.onbeforeunload = null;
+    window.removeEventListener("beforeunload", () => {});
+  </script>
 </body>
 </html>
