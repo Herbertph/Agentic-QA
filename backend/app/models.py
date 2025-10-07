@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Text
 from .database import Base
 
 # -------------------------
@@ -29,3 +29,14 @@ class QuestionEmbedding(Base):
     id = Column(Integer, primary_key=True, index=True)
     question_id = Column(Integer, ForeignKey("questions.id"), unique=True)
     embedding = Column(String)  # será uma string JSON com os números do vetor
+
+# -------------------------
+# Trechos de documentos (PDFs)
+# -------------------------
+class DocumentChunk(Base):
+    __tablename__ = "document_chunks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    source_name = Column(String, nullable=False)       # nome do PDF
+    content = Column(Text, nullable=False)             # texto do trecho
+    embedding = Column(Text, nullable=False)           # embedding JSON
