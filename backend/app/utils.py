@@ -1,10 +1,15 @@
 import requests
+import os
+from dotenv import load_dotenv
 import json
 import numpy as np
 import re
 from sqlalchemy.orm import Session
 import app.models as models
 
+# 🔹 Carregar variáveis do .env
+load_dotenv()
+LLAMA_URL = os.getenv("LLAMA_URL", "http://localhost:11434")
 
 # 🔧 Normaliza o texto antes de gerar o embedding
 def normalize_text(text: str):
@@ -22,7 +27,7 @@ def get_embedding(text: str):
     try:
         text = normalize_text(text)
         response = requests.post(
-            "http://localhost:11434/api/embeddings",
+            f"{LLAMA_URL}/api/embeddings",
             json={"model": "nomic-embed-text", "prompt": text},
             timeout=30
         )
@@ -87,7 +92,7 @@ def query_local_ai(prompt: str, context: list[str] = []):
         full_prompt = f"Context:\n{context_text}\n\nQuestion:\n{prompt}\nAnswer concisely."
 
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            f"{LLAMA_URL}/api/generate",
             json={"model": "llama3", "prompt": full_prompt, "stream": False},
             timeout=60
         )

@@ -1,0 +1,46 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agent_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    networks:
+      - localnet
+    volumes:
+      - ./backend:/app
+    restart: always
+
+  llama:
+    image: ollama/ollama:latest
+    container_name: agent_llama
+    ports:
+      - "11434:11434"
+    # 🔹 Volume persistente para manter os modelos baixados
+    volumes:
+      - ./models:/root/.ollama
+    networks:
+      - localnet
+    restart: always
+    # 🔹 Faz o download automático do modelo antes de iniciar o servidor
+    entrypoint: ["/bin/sh", "-c", "ollama pull nomic-embed-text && ollama serve"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agent_frontend
+    ports:
+      - "3000:80"   
+    depends_on:
+      - backend
+    networks:
+      - localnet
+    restart: always
+
+networks:
+  localnet:
+    driver: bridge
