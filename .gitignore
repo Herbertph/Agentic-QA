@@ -138,3 +138,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 backend/venv/ 
+models/models/blobs/
+models/models/manifests/
+models/id_ed25519
+models/id_ed25519.pub
