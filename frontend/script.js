@@ -3,7 +3,7 @@ const resetBtn = document.getElementById("resetBtn");
 const questionInput = document.getElementById("question");
 const responseDiv = document.getElementById("response");
 
-const API_URL = "http://127.0.0.1:8000/ask";
+const API_URL = `http://${window.location.hostname}:8000/ask`;
 
 let isProcessing = false;
 
