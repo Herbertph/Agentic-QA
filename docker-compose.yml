@@ -15,18 +15,25 @@ services:
     restart: always
 
   llama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.3.12
     container_name: agent_llama
     ports:
       - "11434:11434"
-    # 🔹 Volume persistente para manter os modelos baixados
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_GPU=0          # força CPU
     volumes:
       - ./models:/root/.ollama
     networks:
       - localnet
     restart: always
-    # 🔹 Faz o download automático do modelo antes de iniciar o servidor
-    entrypoint: ["/bin/sh", "-c", "ollama pull nomic-embed-text && ollama serve"]
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama serve & 
+       sleep 10 &&
+       (ollama list | grep -q nomic-embed-text || ollama pull nomic-embed-text) &&
+       (ollama list | grep -q llama3 || ollama pull llama3 || echo '⚠️ Falha ao puxar llama3, continuando...') &&
+       tail -f /dev/null"
 
   frontend:
     build:
@@ -34,12 +41,34 @@ services:
       dockerfile: Dockerfile
     container_name: agent_frontend
     ports:
-      - "3000:80"   
+      - "3000:80"
     depends_on:
       - backend
     networks:
       - localnet
     restart: always
+
+  backup:
+    image: alpine
+    container_name: agent_backup
+    volumes:
+      - ./backend:/data
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    # 💾 Faz backup diário e só executa se o banco existir
+    command: >
+      "while true; do
+        if [ -f /data/agent.db ]; then
+          cp /data/agent.db /backups/agent_$(date +%Y-%m-%d_%H-%M-%S).bak;
+          echo 'Backup created at' $(date);
+        else
+          echo 'Database not found, skipping backup at' $(date);
+        fi;
+        sleep 86400;
+      done"
+    restart: always
+    networks:
+      - localnet
 
 networks:
   localnet:
