@@ -1,20 +1,22 @@
-FROM python:3.11
+# Etapa 1: Builder — instala dependências com cache
+FROM python:3.11-slim AS builder
 
-# Definir diretório principal do app dentro do container
+WORKDIR /install
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install --user -r requirements.txt
+
+# Etapa 2: Runtime — imagem leve e limpa
+FROM python:3.11-slim
 WORKDIR /app
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
 
-# Tornar o diretório /app visível como raiz de importação do Python
-ENV PYTHONPATH=/app
+# Copia apenas dependências da etapa anterior
+COPY --from=builder /root/.local /root/.local
 
-# Copiar dependências e instalar
-COPY ./requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copiar todo o conteúdo do backend (inclusive a pasta app/)
+# Copia o restante do código
 COPY . .
 
-# Expor a porta usada pelo backend
 EXPOSE 8000
 
-# Iniciar o servidor apontando para app.main:app
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

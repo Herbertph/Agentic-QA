@@ -11,7 +11,7 @@ services:
     networks:
       - localnet
     volumes:
-      - ./backend:/app
+      - ./backend/app:/app/app       
     restart: always
 
   llama:
