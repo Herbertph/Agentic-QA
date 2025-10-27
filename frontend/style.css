@@ -1,144 +1,346 @@
+/* 🔹 Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  background-color: #0b0b0b;
-  color: #e2e2e2;
-  font-family: 'Consolas', monospace;
+  background: linear-gradient(90deg, #1c0c4b, #2c1770);
+  color: #f2f2f2;
+  font-family: "Consolas", monospace;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  margin: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
-.container {
-  position: relative;
-  top: 0;
-  transform: none;
-  width: 600px;
-  background: #1a1a1a;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+/* 🔹 Estrutura principal */
+.main-container {
   text-align: center;
-  box-sizing: border-box;
+  width: 700px;
+  max-width: 90%;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.15);
+  padding: 40px 30px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-h1 {
-  color: #00ffae;
-}
-
-.terminal {
+/* 🔹 Header */
+.header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 40px;
 }
 
-textarea {
-  width: 90%;
-  height: 100px;
-  background: #111;
-  color: #fff;
-  border: 1px solid #333;
-  border-radius: 5px;
-  padding: 10px;
-  resize: none;
-  font-size: 14px;
+.title {
+  color: #fcd84a;
+  font-size: 2.3rem;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  letter-spacing: 2px;
 }
 
-button {
-  margin: 10px 5px;
-  padding: 8px 15px;
-  background-color: #00ffae;
-  border: none;
-  border-radius: 5px;
-  color: #000;
-  cursor: pointer;
+.reset-btn {
+  background: transparent;
+  border: 1px solid #fcd84a;
+  color: #fcd84a;
   font-weight: bold;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-button:hover {
-  background-color: #00cc8b;
+.reset-btn:hover {
+  background: #fcd84a;
+  color: #1c0c4b;
+}
+
+/* 🔹 Conteúdo */
+.subtitle {
+  margin-bottom: 25px;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.chat-box {
+  background: rgba(10, 10, 20, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.05);
 }
 
 .response {
-  width: 90%;
-  min-height: 100px;
-  background: #111;
-  color: #00ffae;
-  border-radius: 5px;
-  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fcd84a;
+  border-radius: 6px;
+  padding: 15px;
+  min-height: 120px;
   text-align: left;
   overflow-y: auto;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.input-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+textarea {
+  flex: 1;
+  height: 70px;
+  background: #1c0c4b;
+  border: 1px solid #3a2d7d;
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px;
+  font-size: 14px;
+  resize: none;
+}
+
+textarea:focus {
+  outline: 1px solid #fcd84a;
+}
+
+.send-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fcd84a;
+  border: none;
+  color: #1c0c4b;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+.send-btn:hover {
+  background: #ffe570;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+}
+
+.hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* 🔹 Painel Admin Refinado */
+body.admin-page {
+  background: linear-gradient(90deg, #1c0c4b, #2c1770);
+  color: #f1f1f1;
+  font-family: "Consolas", monospace;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+/* Container principal */
+.container {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.15);
+  animation: fadeIn 0.5s ease;
+}
+
+/* Título */
+.container h1 {
+  font-size: 2rem;
+  color: #fcd84a;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+/* Área de autenticação */
 .admin-section {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 30px;
 }
 
+.admin-section input {
+  flex: 1;
+  background: #0f0f2e;
+  border: 1px solid #3a2d7d;
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.admin-section button {
+  background: #fcd84a;
+  border: none;
+  color: #1c0c4b;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.admin-section button:hover {
+  background: #ffe570;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* Lista de perguntas */
 .list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
 }
 
 .question-item {
-  background-color: #1a1a1a;
-  padding: 15px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
+  padding: 16px 18px;
+  text-align: left;
+  animation: fadeInUp 0.4s ease;
+}
+
+.question-item p {
+  color: #fcd84a;
+  margin-bottom: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .question-item textarea {
   width: 100%;
-  height: 80px;
-  margin-top: 5px;
+  background: #0f0f2e;
+  color: #f2f2f2;
+  border: 1px solid #3a2d7d;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  resize: none;
+  height: 70px;
+  margin-bottom: 10px;
 }
 
 .btn-row {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+}
+
+.save-btn,
+.delete-btn {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s;
 }
 
 .save-btn {
-  background-color: #00ff99;
-  color: black;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+  background: #00ffae;
+  color: #000;
+}
+
+.save-btn:hover {
+  background: #00d68a;
+  box-shadow: 0 0 12px rgba(0, 255, 175, 0.4);
 }
 
 .delete-btn {
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+  background: #ff4d4d;
+  color: #fff;
 }
 
 .delete-btn:hover {
-  background-color: #ff1a1a;
+  background: #ff6b6b;
+  box-shadow: 0 0 12px rgba(255, 77, 77, 0.4);
 }
 
-/* 🔹 Ajustes exclusivos para o painel admin */
-.admin-page {
-  background-color: #000;
-  overflow-y: auto;
-  height: 100vh;
+/* 🔹 Animações suaves */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.admin-page .container {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  transform: none !important;
-  margin: 40px auto !important;
-  max-width: 900px;
-  padding: 30px;
-  overflow: visible;
-  box-sizing: border-box;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* 🔹 Correção de alinhamento na área de resposta */
+.response {
+  text-align: left;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.response p {
+  margin: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.response p span {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.response strong {
+  color: #fcd84a;
+  font-weight: 700;
+  min-width: 90px;
+  display: inline-block;
+}
+
+/* Faz o texto da resposta começar logo após o "Answer:" */
+.response .answer-line {
+  margin-left: 90px; /* mesmo tamanho do label acima */
+  display: block;
+  color: #fff;
+}
+
+/* Ajuste dos ícones */
+.response p::before {
+  margin-right: 6px;
+  flex-shrink: 0;
 }

@@ -1,63 +1,39 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agentic QA</title>
+  <title>VGT - QA Assistant</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <div class="container">
-    <h1>VGT - QA</h1>
-    <div class="terminal">
-      <!-- form apenas para manter estrutura sem submissão real -->
-      <form id="qaForm" onsubmit="return false;">
-        <textarea id="question" placeholder="Type your question here..." autocomplete="off"></textarea>
-        <button id="sendBtn" type="button">Ask</button>
-        <button id="resetBtn" type="button">Reset</button>
-      </form>
-      <hr />
-      <div id="response" class="response"></div>
-    </div>
+  <div class="main-container">
+    <header class="header">
+      <h1 class="title">VGT - QA</h1>
+      <button id="resetBtn" class="reset-btn">⟳ Reset</button>
+    </header>
+
+    <section class="content">
+      <p class="subtitle">Welcome to the VGT QA Assistant. Ask me anything to get started.</p>
+
+      <div class="chat-box">
+        <div id="response" class="response"></div>
+
+        <div class="input-area">
+          <textarea
+            id="question"
+            placeholder="Type your question here..."
+            autocomplete="off"
+          ></textarea>
+          <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+
+        <small class="hint">Press Enter to send, Shift + Enter for new line</small>
+      </div>
+    </section>
   </div>
 
   <script src="script.js"></script>
-
-  <script>
-    // 🚫 Evita qualquer reload automático ou comportamento de form
-    const qaForm = document.getElementById("qaForm");
-    const sendBtn = document.getElementById("sendBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const questionInput = document.getElementById("question");
-
-    // Impede o envio implícito do formulário
-    qaForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    });
-
-    // Bloqueia Enter sozinho dentro do textarea
-    questionInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.ctrlKey) {
-        e.preventDefault();
-      } else if (e.key === "Enter" && e.ctrlKey) {
-        sendBtn.click(); // Ctrl+Enter envia
-      }
-    });
-
-    // Garante que botões não causem refresh
-    [sendBtn, resetBtn].forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      });
-    });
-
-    // Remove qualquer listener antigo de beforeunload
-    window.onbeforeunload = null;
-    window.removeEventListener("beforeunload", () => {});
-  </script>
 </body>
 </html>

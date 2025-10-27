@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Caminho do banco de dados SQLite
-SQLALCHEMY_DATABASE_URL = "sqlite:///./agent.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./data/agent.db"
 
 # Criando o engine (responsável pela conexão com o banco)
 engine = create_engine(

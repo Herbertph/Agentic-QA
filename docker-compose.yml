@@ -11,7 +11,8 @@ services:
     networks:
       - localnet
     volumes:
-      - ./backend/app:/app/app       
+      - ./backend/app:/app/app  
+      - agent_db_volume:/app/data
     restart: always
 
   llama:
@@ -52,7 +53,7 @@ services:
     image: alpine
     container_name: agent_backup
     volumes:
-      - ./backend:/data
+      - agent_db_volume:/data        # em vez de ./backend:/data
       - ./backups:/backups
     entrypoint: ["/bin/sh", "-c"]
     # 💾 Faz backup diário e só executa se o banco existir
@@ -73,3 +74,5 @@ services:
 networks:
   localnet:
     driver: bridge
+volumes:
+  agent_db_volume:

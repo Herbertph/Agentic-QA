@@ -8,9 +8,7 @@ const API_URL = `http://${window.location.hostname}:8000/ask`;
 let isProcessing = false;
 
 sendBtn.addEventListener("click", async (event) => {
-  event.preventDefault(); // evita qualquer reload ou repaint
-  event.stopPropagation(); // impede eventos do container
-
+  event.preventDefault();
   if (isProcessing) return;
 
   const userQuestion = questionInput.value.trim();
@@ -19,56 +17,66 @@ sendBtn.addEventListener("click", async (event) => {
     return;
   }
 
-  // Mostra status de carregamento
   responseDiv.innerHTML = "<em>⌛ Consulting...</em>";
   isProcessing = true;
   sendBtn.disabled = true;
 
   try {
-    const res = await fetch(`${API_URL}?user_question=${encodeURIComponent(userQuestion)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    cache: "no-cache"
-  });
+    const res = await fetch(
+      `${API_URL}?user_question=${encodeURIComponent(userQuestion)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-cache",
+      }
+    );
 
-  const data = await res.json();
+    const data = await res.json();
+    console.log("🧩 Backend response:", data); // mantém debug
 
-  // Garante que a resposta sempre persista
-  const safe = data || {};
-  const answer = safe.ai_answer || "❓ I don’t have this answer now. Please check with one of the leads.";
-  const context = safe.context_used || "No context found.";
-  const score = (typeof safe.context_match_score === "number")
-    ? `${(safe.context_match_score * 100).toFixed(2)}%`
-    : "N/A";
+    // ✅ Proteção contra campos ausentes
+    const answer =
+      data?.ai_answer && data.ai_answer.trim() !== ""
+        ? data.ai_answer
+        : "❓ I don’t have this answer now. Please check with one of the leads.";
 
-  responseDiv.innerHTML = `
-    <div style="white-space: pre-wrap;">
-      <strong>💬 Answer:</strong><br>  ${answer}<br><br>
-      
-      <small><strong>📊 Similarity:</strong> ${score}</small>
-    </div>
-  `;
-} catch (err) {
-  console.error("⚠️ Error:", err);
-  responseDiv.innerHTML = `<span style="color:red;">Erro: ${err.message}</span>`;
-} finally {
+    const score =
+      typeof data?.context_match_score === "number"
+        ? `${(data.context_match_score * 100).toFixed(2)}%`
+        : "N/A";
+
+    const context =
+      data?.context_used && data.context_used !== "null"
+        ? data.context_used
+        : "No context available.";
+
+    responseDiv.innerHTML = `
+  <div class="response">
+    <p><strong>💬 Answer:</strong></p>
+    <div class="answer-line">${answer}</div>
+
+    <p><strong>📊 Similarity:</strong> ${score}</p>
+    <p><strong>🧩 Context:</strong> ${context}</p>
+  </div>
+    `;
+  } catch (err) {
+    console.error("⚠️ Error:", err);
+    responseDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
+  } finally {
     isProcessing = false;
     sendBtn.disabled = false;
   }
 });
 
-resetBtn.addEventListener("click", (event) => {
-  event.preventDefault();
-  event.stopPropagation();
+resetBtn.addEventListener("click", (e) => {
+  e.preventDefault();
   questionInput.value = "";
   responseDiv.innerHTML = "";
 });
 
-// Impede que Enter recarregue a página dentro do textarea
 questionInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && e.ctrlKey) {
-    sendBtn.click(); // Ctrl+Enter envia a pergunta
-  } else if (e.key === "Enter") {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
+    sendBtn.click();
   }
 });
